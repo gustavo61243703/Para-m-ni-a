@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Para ti</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&family=Great+Vibes&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1e2024, #2a2d33);
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        #canvas-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            opacity: 0.2;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 85%;
+            max-width: 500px;
+            padding: 40px;
+            background: rgba(30, 30, 30, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        h1 {
+            font-family: 'Great Vibes', cursive;
+            font-size: 3.2em;
+            margin: 0 0 15px 0;
+            background: linear-gradient(to right, #ffafbd, #ffc3a0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            min-height: 70px;
+            filter: drop-shadow(0px 0px 5px rgba(255, 175, 189, 0.3));
+        }
+
+        p {
+            font-size: 1.15em;
+            line-height: 1.6;
+            margin-bottom: 35px;
+            min-height: 110px;
+            color: #ececec;
+            font-weight: 300;
+        }
+
+        /* Estilo para el mensaje final que es diferente */
+        .final-text {
+            font-size: 1.3em;
+            font-weight: 400;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 175, 189, 0.3);
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #ffafbd 0%, #ffc3a0 100%);
+            border: none;
+            color: #2a2a2a;
+            padding: 14px 40px;
+            font-size: 1.05em;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            outline: none;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 175, 189, 0.4);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 175, 189, 0.6);
+            color: #000;
+        }
+
+        .btn:active {
+            transform: scale(0.95) translateY(0);
+        }
+
+        /* Animaciones */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        .fade-out {
+            animation: fadeOut 0.5s ease-in forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        .heart-container {
+            display: none;
+        }
+        
+        .heart-icon {
+            font-size: 80px;
+            color: #ffafbd;
+            margin-bottom: 10px;
+            animation: heartbeat 2s infinite ease-in-out;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 15px #ffafbd); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas-bg"></canvas>
+
+    <div class="container" id="card">
+        <h1 id="titulo">Hola...</h1>
+        <p id="texto">tengo que decir algunas cosas, simplemente para demostrar un poco mi interes y asi nada malo ok?</p>
+        <button class="btn" onclick="siguienteMensaje()">Siguiente</button>
+    </div>
+
+    <div class="container heart-container" id="final">
+        <div class="heart-icon">♥</div>
+        
+        <p class="final-text">
+            Enserio textraño mucho perdón por todo lo malo pero porfavor no me odies ni me mires mal tu, porq solo me importa lo q tú pienses d mi más nadie mas.
+        </p>
+
+    </div>
+
+    <script>
+        // --- 1. FONDO DE LLUVIA "TE AMO" ---
+        const canvas = document.getElementById('canvas-bg');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let particles = [];
+        
+        const words = ["Te amo", "♥", "Te extraño", "♥", "Nosotros", "♥"];
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class TextParticle {
+            constructor() {
+                this.reset();
+                this.y = Math.random() * height;
+            }
+            
+            reset() {
+                this.x = Math.random() * width;
+                this.y = -20;
+                this.speed = Math.random() * 1.5 + 0.5;
+                this.size = Math.random() * 14 + 10;
+                this.text = words[Math.floor(Math.random() * words.length)];
+                this.opacity = Math.random() * 0.5 + 0.1;
+            }
+
+            update() {
+                this.y += this.speed;
+                if (this.y > height + 20) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(255, 175, 189, ${this.opacity})`;
+                ctx.font = `${this.size}px 'Poppins'`;
+                ctx.fillText(this.text, this.x, this.y);
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for(let i=0; i<60; i++) {
+                particles.push(new TextParticle());
+            }
+        }
+        initParticles();
+
+        function animateBg() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateBg);
+        }
+        animateBg();
+
+
+        // --- 2. TUS MENSAJES ---
+        const mensajes = [
+            {
+                titulo: "no olvides que",
+                texto: "debes comer bien, debes de comer tus 3 comidas, necesito que estes bien, q te cuides porq aunq no lo creas yo me preocupo mucho y aveces me la paso sobrepensando demasiado las cosas, asi q solo cuidate, si t cuidas a ti me cuidas a mi"
+            },
+            {
+                titulo: "tampoco olvides que",
+                texto: "enserio te extraño demasiado y t pienso siempre, y si no t lo digo solo es porq me dijiste q de momento no estaba bien y me estoy guardando enserio todas esas cosas, aguantando las ganas de decirte, lo mucho q te amo o extraño.."
+            },
+            {
+                titulo: "perdon",
+                texto: "Perdon por decirte estas cosas, se q quieres tu distancia, q no haga nada de lo q normalmente hacia, pero tmpc puedo simplemente reprimir el como quiero actuar contigo, me gusta ser asi, expresarte todo pero enserio losiento, no puedo fingir ."
+            },
+            {
+                titulo: "nunca pienses que nunca te ame",
+                texto: "no es broma cuando t digo q yo daría hasta mi vida por ti, y esq solo me puedo ver contigo, y solo quisiera poder estat contigo siempre, no puedo evitar ni reprimir esto, perdon si hago mal por decirlo.."
+            }
+        ];
+
+        let paso = 0;
+        const tituloEl = document.getElementById('titulo');
+        const textoEl = document.getElementById('texto');
+        const cardEl = document.getElementById('card');
+        const finalEl = document.getElementById('final');
+
+        tituloEl.classList.add('fade-in');
+        textoEl.classList.add('fade-in');
+
+        function siguienteMensaje() {
+            tituloEl.classList.remove('fade-in');
+            textoEl.classList.remove('fade-in');
+            void tituloEl.offsetWidth; 
+            
+            tituloEl.classList.add('fade-out');
+            textoEl.classList.add('fade-out');
+
+            setTimeout(() => {
+                tituloEl.classList.remove('fade-out');
+                textoEl.classList.remove('fade-out');
+
+                if (paso < mensajes.length) {
+                    tituloEl.innerText = mensajes[paso].titulo;
+                    textoEl.innerText = mensajes[paso].texto;
+                    tituloEl.classList.add('fade-in');
+                    textoEl.classList.add('fade-in');
+                    paso++;
+                } else {
+                    mostrarFinal();
+                }
+            }, 500);
+        }
+
+        function mostrarFinal() {
+            cardEl.style.transition = "opacity 0.5s ease";
+            cardEl.style.opacity = 0;
+            setTimeout(() => {
+                cardEl.style.display = 'none';
+                finalEl.style.display = 'block';
+                setTimeout(() => {
+                    finalEl.classList.add('fade-in');
+                }, 50);
+            }, 500);
+        }
+
+    </script>
+</body>
+</html>
